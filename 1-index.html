@@ -1,0 +1,1589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>HostelBox — Main Gate Smart Locker System</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Fraunces (display), Inter (body), JetBrains Mono (PINs) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700;9..144,900&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+            display: ['Fraunces', 'serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    :root {
+      --green-950: #06231A;
+      --green-900: #0B3527;
+      --green-800: #104733;
+      --green-700: #156045;
+      --green-600: #1C7A57;
+      --gold: #C9A24B;
+      --gold-soft: #EBDCAE;
+      --cream: #F5F0E2;
+      --paper: #FFFDF6;
+      --line: #E3D9BE;
+      --ink: #14291F;
+      --muted: #68796E;
+    }
+    html { -webkit-text-size-adjust: 100%; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--cream);
+      background-image: radial-gradient(circle at 15% 0%, rgba(201,162,75,0.10), transparent 42%),
+                        radial-gradient(circle at 95% 10%, rgba(11,53,39,0.06), transparent 38%);
+      background-attachment: fixed;
+      color: var(--ink);
+      touch-action: manipulation;
+    }
+    .font-display { font-family: 'Fraunces', serif; }
+
+    /* ---------- Surfaces ---------- */
+    .hb-card {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 1.25rem;
+      box-shadow: 0 1px 2px rgba(11,53,39,0.05), 0 10px 28px -18px rgba(11,53,39,0.22);
+    }
+    .hb-dark {
+      background: linear-gradient(160deg, var(--green-900), var(--green-950));
+      border: 1px solid rgba(201,162,75,0.28);
+      border-radius: 1.25rem;
+      box-shadow: 0 14px 34px -18px rgba(6,35,26,0.55);
+    }
+    .hb-row {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 0.9rem;
+    }
+    .gold-ring { border: 1.5px solid var(--gold); }
+
+    /* ---------- Chips & badges ---------- */
+    .chip {
+      display: inline-flex; align-items: center; gap: 0.3rem;
+      font-size: 10px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase;
+      padding: 0.2rem 0.6rem; border-radius: 999px;
+    }
+    .chip-gold { background: rgba(201,162,75,0.14); color: #8a6a1d; border: 1px solid rgba(201,162,75,0.45); }
+    .chip-green { background: rgba(21,96,69,0.10); color: var(--green-700); border: 1px solid rgba(21,96,69,0.30); }
+    .chip-amber { background: #FDF3DC; color: #92610F; border: 1px solid #EBD9A8; }
+    .chip-rose { background: #FDECEF; color: #B4233C; border: 1px solid #F3C2CC; }
+
+    /* ---------- Buttons ---------- */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 0.45rem;
+      font-weight: 700; border-radius: 0.85rem; transition: all .18s ease; cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn:active { transform: scale(0.97); }
+    .btn-green { background: linear-gradient(160deg, var(--green-800), var(--green-950)); color: var(--gold-soft); border: 1px solid rgba(201,162,75,0.35); box-shadow: 0 6px 16px -8px rgba(6,35,26,0.6); }
+    .btn-green:hover { filter: brightness(1.12); }
+    .btn-gold { background: linear-gradient(160deg, #DDBB62, var(--gold)); color: var(--green-950); border: 1px solid #a8833a; box-shadow: 0 6px 16px -8px rgba(168,131,58,0.7); }
+    .btn-gold:hover { filter: brightness(1.06); }
+    .btn-ghost { background: transparent; color: var(--green-800); border: 1px solid var(--line); }
+    .btn-ghost:hover { background: rgba(11,53,39,0.06); }
+    .btn-dark-key { background: rgba(255,255,255,0.06); color: #EDE7D4; border: 1px solid rgba(255,255,255,0.10); }
+    .btn-dark-key:hover { background: rgba(255,255,255,0.12); }
+
+    /* ---------- Role tabs (header) ---------- */
+    .role-tab {
+      padding: 0.5rem 0.9rem; border-radius: 0.8rem; font-size: 12px; font-weight: 800;
+      display: flex; align-items: center; justify-content: center; gap: 0.45rem;
+      transition: all .18s ease; cursor: pointer; white-space: nowrap;
+    }
+    @media (min-width: 640px) { .role-tab { font-size: 13px; } }
+    .role-tab-active { background: linear-gradient(160deg, #DDBB62, var(--gold)); color: var(--green-950); box-shadow: 0 4px 12px -4px rgba(201,162,75,0.8); }
+    .role-tab-idle { color: rgba(237,231,212,0.75); }
+    .role-tab-idle:hover { color: #fff; background: rgba(255,255,255,0.07); }
+
+    /* ---------- Student sub tabs ---------- */
+    .sub-tab {
+      padding: 0.5rem 0.95rem; border-radius: 0.8rem; font-size: 12px; font-weight: 800;
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      transition: all .18s ease; cursor: pointer; white-space: nowrap;
+    }
+    .sub-tab-active { background: var(--green-900); color: var(--gold-soft); box-shadow: 0 4px 10px -4px rgba(11,53,39,0.55); }
+    .sub-tab-idle { color: var(--muted); }
+    .sub-tab-idle:hover { color: var(--ink); background: rgba(11,53,39,0.05); }
+
+    /* ---------- Inputs ---------- */
+    .hb-input {
+      width: 100%; background: var(--paper); border: 1px solid var(--line);
+      border-radius: 0.85rem; padding: 0.65rem 0.9rem; font-size: 13px; font-weight: 600;
+      color: var(--ink); transition: all .18s ease;
+    }
+    .hb-input:focus { outline: none; border-color: var(--green-700); box-shadow: 0 0 0 3px rgba(21,96,69,0.15); }
+    .hb-input::placeholder { color: #A9B4A2; font-weight: 500; }
+
+    /* ---------- Size radio cards ---------- */
+    .size-card {
+      text-align: center; padding: 0.55rem 0.4rem; border-radius: 0.85rem;
+      border: 1px solid var(--line); font-size: 12px; font-weight: 800; color: var(--muted);
+      transition: all .18s ease; background: var(--paper);
+    }
+    .size-card .size-sub { display: block; font-size: 10px; font-weight: 500; color: #A9B4A2; margin-top: 1px; }
+    input:checked + .size-card {
+      border-color: var(--green-700); background: rgba(21,96,69,0.08); color: var(--green-800);
+      box-shadow: 0 0 0 3px rgba(21,96,69,0.12);
+    }
+    input:checked + .size-card .size-sub { color: var(--green-600); }
+
+    /* ---------- Keypad ---------- */
+    .key {
+      padding: 0.8rem 0; border-radius: 0.85rem; font-family: 'JetBrains Mono', monospace;
+      font-size: 1.15rem; font-weight: 700; background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.09); color: #EDE7D4;
+      transition: all .14s ease; cursor: pointer;
+    }
+    .key:hover { background: rgba(255,255,255,0.12); }
+    .key:active { transform: scale(0.94); }
+    .key-clr { background: rgba(190,40,60,0.22); color: #F5A9B4; font-family: 'Inter'; font-size: 11px; font-weight: 800; letter-spacing: 0.1em; }
+    .key-clr:hover { background: rgba(190,40,60,0.34); }
+    .key-go { background: linear-gradient(160deg, #DDBB62, var(--gold)); color: var(--green-950); border-color: #a8833a; font-family: 'Inter'; font-size: 11px; font-weight: 800; letter-spacing: 0.1em; }
+    .key-go:hover { filter: brightness(1.08); }
+
+    /* ---------- PIN panel ---------- */
+    .pin-panel {
+      background: linear-gradient(160deg, var(--green-900), var(--green-950));
+      border: 1px solid rgba(201,162,75,0.35);
+      border-radius: 1rem; color: #fff;
+    }
+    .pin-digits { font-family: 'JetBrains Mono', monospace; color: var(--gold); letter-spacing: 0.3em; text-shadow: 0 0 18px rgba(201,162,75,0.35); }
+
+    /* ---------- Section label ---------- */
+    .step-label { font-size: 11px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: var(--green-700); }
+
+    /* ---------- Toast ---------- */
+    .hb-toast { border-radius: 1rem; border-left: 4px solid var(--gold); background: linear-gradient(160deg, var(--green-900), var(--green-950)); color: #fff; box-shadow: 0 14px 30px -12px rgba(6,35,26,0.6); }
+    .hb-toast-error { border-left-color: #E5484D; }
+    .hb-toast-amber { border-left-color: var(--gold); }
+
+    /* ---------- Animations ---------- */
+    @keyframes pulse-live {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
+    }
+    .live-dot { animation: pulse-live 2s infinite ease-in-out; }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-6px); }
+      40%, 80% { transform: translateX(6px); }
+    }
+    .animate-shake { animation: shake 0.35s ease-in-out; }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .fade-up { animation: fadeUp 0.35s ease both; }
+
+    /* ---------- Scrollbar ---------- */
+    ::-webkit-scrollbar { width: 10px; height: 10px; }
+    ::-webkit-scrollbar-track { background: var(--cream); }
+    ::-webkit-scrollbar-thumb { background: #CFC49F; border-radius: 8px; border: 2px solid var(--cream); }
+    ::-webkit-scrollbar-thumb:hover { background: var(--gold); }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <!-- Non-blocking Toast Notification Stack -->
+  <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-sm w-full px-4 sm:px-0 pointer-events-none"></div>
+
+  <!-- ===================================================================== -->
+  <!-- TOP NAVIGATION & ROLE SWITCHER                                        -->
+  <!-- ===================================================================== -->
+  <header class="sticky top-0 z-40 border-b" style="background: linear-gradient(150deg, var(--green-900), var(--green-950)); border-bottom: 1.5px solid rgba(201,162,75,0.4); box-shadow: 0 8px 24px -14px rgba(6,35,26,0.6);">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 py-3">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+
+        <!-- Brand & Live Compartment Status -->
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 gold-ring" style="background: rgba(201,162,75,0.12);">
+              <svg class="w-5 h-5" fill="none" stroke="#C9A24B" stroke-width="2.2" viewBox="0 0 24 24">
+                <rect x="3" y="3" width="18" height="18" rx="3" />
+                <line x1="12" y1="3" x2="12" y2="21" />
+                <circle cx="8.5" cy="12" r="1" fill="#C9A24B" />
+                <circle cx="15.5" cy="12" r="1" fill="#C9A24B" />
+              </svg>
+            </div>
+            <div>
+              <h1 class="font-display text-lg sm:text-xl font-black tracking-tight leading-none" style="color: #F3EDDA;">Hostel<span style="color: var(--gold);">Box</span></h1>
+              <div class="flex items-center gap-2 mt-1">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 live-dot"></span>
+                <p id="header-status-line" class="text-[10px] font-bold uppercase tracking-[0.14em]" style="color: rgba(201,162,75,0.85);">
+                  Main Gate Smart Locker
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Mobile Reset Demo Button -->
+          <button type="button" onclick="resetDemoState()"
+            class="sm:hidden px-2.5 py-1.5 rounded-lg text-[11px] font-bold btn-dark-key">
+            Reset Demo
+          </button>
+        </div>
+
+        <!-- Two Integrated Role Tabs + Desktop Reset Button -->
+        <div class="flex items-center justify-between sm:justify-end gap-2.5">
+          <nav class="flex-1 sm:flex-initial grid grid-cols-2 p-1 rounded-xl" style="background: rgba(0,0,0,0.28); border: 1px solid rgba(201,162,75,0.25);" aria-label="Role Switcher">
+            <button type="button" id="tab-student-btn" onclick="switchRoleTab('student')" class="role-tab role-tab-active">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 10L12 5 2 10l10 5 10-5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+              <span>Student</span>
+              <span id="nav-parcel-badge" class="px-1.5 py-0.5 text-[11px] font-mono font-extrabold rounded-full" style="background: rgba(6,35,26,0.85); color: var(--gold);">
+                1
+              </span>
+            </button>
+            <button type="button" id="tab-courier-btn" onclick="switchRoleTab('courier')" class="role-tab role-tab-idle">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 17h-2v-11a1 1 0 011-1h9v12m-8 0h8m4 0h2v-6l-3-4h-3v10m-10 2a2 2 0 104 0 2 2 0 00-4 0zm12 0a2 2 0 104 0 2 2 0 00-4 0z"/></svg>
+              <span>Courier</span>
+            </button>
+          </nav>
+
+          <button type="button" onclick="resetDemoState()"
+            class="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-xl btn-dark-key text-xs font-bold whitespace-nowrap">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            <span>Reset Demo</span>
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </header>
+
+  <!-- ===================================================================== -->
+  <!-- MAIN CONTENT WORKSPACE                                                -->
+  <!-- ===================================================================== -->
+  <main class="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 py-6">
+
+    <!-- =================================================================== -->
+    <!-- TAB 1: STUDENT INTERFACE                                            -->
+    <!-- =================================================================== -->
+    <section id="panel-student" class="space-y-5 fade-up">
+
+      <!-- Real-time SMS/WhatsApp Arrival Alert Banner (Shown when new drop happens) -->
+      <div id="student-arrival-banner" class="hidden hb-dark text-white p-4 flex items-start justify-between gap-3">
+        <div class="flex items-start gap-3">
+          <svg class="w-5 h-5 mt-0.5 shrink-0" fill="none" stroke="#C9A24B" stroke-width="2" viewBox="0 0 24 24"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+          <div>
+            <span class="text-[10px] font-bold uppercase tracking-wider" style="color: var(--gold);">SMS / WhatsApp Delivery Alert</span>
+            <p id="student-arrival-banner-text" class="text-xs sm:text-sm font-semibold mt-0.5 leading-relaxed" style="color: #EDE7D4;"></p>
+          </div>
+        </div>
+        <button type="button" onclick="dismissArrivalBanner()" class="text-xs font-bold px-2 py-1 rounded-lg btn-dark-key">
+          ✕
+        </button>
+      </div>
+
+      <!-- Student Section Tabs (icon nav) -->
+      <div class="flex gap-1.5 p-1 rounded-xl w-fit hb-card !rounded-xl" aria-label="Student sections">
+        <button type="button" id="student-intent-tab-btn" onclick="switchStudentView('intents')" class="sub-tab sub-tab-active">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M12 8v4l2 2m6-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          Delivery Intent
+        </button>
+        <button type="button" id="student-parcels-tab-btn" onclick="switchStudentView('parcels')" class="sub-tab sub-tab-idle">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+          Parcels <span id="student-subtab-parcel-count" class="px-1.5 py-0.5 rounded-full text-[10px] font-mono" style="background: rgba(201,162,75,0.18); color: #8a6a1d;">0</span>
+        </button>
+        <button type="button" id="student-history-tab-btn" onclick="switchStudentView('history')" class="sub-tab sub-tab-idle">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          History
+        </button>
+      </div>
+
+      <div id="student-intents-panel" class="grid grid-cols-1 gap-6 items-start">
+        <div class="max-w-2xl space-y-5">
+
+          <!-- Active Student Selector & Permanent Address Card -->
+          <div class="hb-card p-5 space-y-4">
+            <div class="flex items-center justify-between">
+              <span class="chip chip-green">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+                Verified Resident
+              </span>
+              <button type="button" onclick="toggleRegisterModal(true)" class="text-xs font-extrabold hover:underline" style="color: var(--green-700);">
+                + Add Resident
+              </button>
+            </div>
+
+            <div>
+              <label for="student-selector" class="block text-xs font-bold mb-1.5" style="color: var(--muted);">Active Student Profile</label>
+              <div class="relative">
+                <select id="student-selector" onchange="handleSelectStudent(this.value)"
+                  class="hb-input appearance-none pr-9 !font-bold cursor-pointer">
+                </select>
+                <div class="pointer-events-none absolute inset-y-0 right-3 flex items-center" style="color: var(--green-700);">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"/></svg>
+                </div>
+              </div>
+              <p id="student-phone-caption" class="text-[11px] font-mono mt-1.5 tracking-wider" style="color: var(--muted);"></p>
+            </div>
+          </div>
+
+          <!-- Log Delivery Intent ('Expecting a Parcel') -->
+          <div class="hb-card p-5">
+            <div class="flex items-center justify-between mb-1">
+              <h2 class="font-display text-lg font-black" style="color: var(--ink);">Expecting a Parcel?</h2>
+              <span class="chip chip-gold">Intent Queue</span>
+            </div>
+            <p class="text-xs leading-relaxed mb-4" style="color: var(--muted);">
+              Log your expected delivery so the gate validates your number when the courier arrives.
+            </p>
+
+            <form onsubmit="handleSubmitIntent(event)" class="space-y-3.5">
+              <div>
+                <label class="block text-xs font-bold mb-1.5" style="color: var(--ink);">Parcel Size</label>
+                <div class="grid grid-cols-3 gap-2">
+                  <label class="cursor-pointer">
+                    <input type="radio" name="intent-size" value="Small" class="peer sr-only" />
+                    <div class="size-card">
+                      <svg class="w-4 h-4 mx-auto mb-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="8" y="9" width="8" height="9" rx="1.5"/><path d="M8 12h8"/></svg>
+                      Small
+                      <span class="size-sub">Books/Tech</span>
+                    </div>
+                  </label>
+                  <label class="cursor-pointer">
+                    <input type="radio" name="intent-size" value="Medium" checked class="peer sr-only" />
+                    <div class="size-card">
+                      <svg class="w-4 h-4 mx-auto mb-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="5" y="7" width="14" height="12" rx="1.5"/><path d="M5 10.5h14"/></svg>
+                      Medium
+                      <span class="size-sub">Shoebox</span>
+                    </div>
+                  </label>
+                  <label class="cursor-pointer">
+                    <input type="radio" name="intent-size" value="Large" class="peer sr-only" />
+                    <div class="size-card">
+                      <svg class="w-4 h-4 mx-auto mb-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="14" rx="1.5"/><path d="M3 9.5h18"/></svg>
+                      Large
+                      <span class="size-sub">Backpack</span>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              <div>
+                <label for="intent-provider-select" class="block text-xs font-bold mb-1.5" style="color: var(--ink);">Delivery Provider</label>
+                <select id="intent-provider-select" required class="hb-input cursor-pointer">
+                  <option value="Amazon">Amazon</option><option value="Flipkart">Flipkart</option><option value="Delhivery">Delhivery</option><option value="Blue Dart">Blue Dart</option><option value="Ekart">Ekart</option><option value="Xpressbees">Xpressbees</option><option value="Myntra">Myntra</option><option value="Other">Other</option>
+                </select>
+              </div>
+
+              <div>
+                <label for="intent-note-input" class="block text-xs font-bold mb-1.5" style="color: var(--ink);">
+                  Parcel Note / Carrier OTP <span class="font-medium" style="color: var(--muted);">(optional)</span>
+                </label>
+                <input type="text" id="intent-note-input" placeholder="e.g., Prepaid parcel • Delivery OTP: 4820"
+                  class="hb-input" />
+              </div>
+
+              <button type="submit" class="btn btn-green w-full py-3 px-4 text-xs tracking-wide">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                  <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <span>Log Delivery Intent</span>
+              </button>
+            </form>
+
+            <!-- Active Queued Intents -->
+            <div class="mt-4 pt-3.5" style="border-top: 1px solid var(--line);">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-[11px] font-bold uppercase tracking-wider" style="color: var(--muted);">Active Queued Intents</span>
+                <span id="student-intent-count" class="text-[11px] font-bold" style="color: var(--green-700);">0 Queued</span>
+              </div>
+              <div id="student-intents-list" class="space-y-2"></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div id="student-parcels-panel" class="hidden">
+        <div class="hb-card p-5">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h2 class="font-display text-lg font-black" style="color: var(--ink);">Active Parcels</h2>
+              <p class="text-xs mt-0.5" style="color: var(--muted);">Awaiting drop-off and ready for collection</p>
+            </div>
+            <span id="student-ready-badge" class="chip chip-green !text-xs !px-3 !py-1">0 Ready</span>
+          </div>
+          <div id="student-parcels-list" class="space-y-4"></div>
+        </div>
+      </div>
+
+      <div id="student-history-panel" class="hidden">
+        <div class="hb-card p-5">
+          <div class="mb-4">
+            <h2 class="font-display text-lg font-black" style="color: var(--ink);">Parcel History</h2>
+            <p class="text-xs mt-0.5" style="color: var(--muted);">Collected parcels and cancelled delivery intents</p>
+          </div>
+          <div id="student-history-list" class="space-y-2.5"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- TAB 2: COURIER INTERFACE (QR GATE DROP-OFF)                         -->
+    <!-- =================================================================== -->
+    <section id="panel-courier" class="hidden space-y-6 fade-up">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+        <!-- Left Column (6 cols): Step 1 (Validate Phone) & Step 2 (Dynamic Allocation) -->
+        <div class="lg:col-span-6 space-y-5">
+          <div class="hb-card overflow-hidden !p-0">
+            <!-- QR Gate Header -->
+            <div class="text-white p-5 flex flex-col gap-3" style="background: linear-gradient(150deg, var(--green-900), var(--green-950)); border-bottom: 1.5px solid rgba(201,162,75,0.4);">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 gold-ring" style="background: rgba(201,162,75,0.12);">
+                  <svg class="w-6 h-6" fill="none" stroke="#C9A24B" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M3 3h6v6H3V3zm12 0h6v6h-6V3zM3 15h6v6H3v-6zm12 3h3v3h-3v-3zm3-3h3v3h-3v-3zm-3 0h1v1h-1v-1z"/>
+                  </svg>
+                </div>
+                <div>
+                  <span class="text-[10px] font-mono uppercase tracking-wider" style="color: rgba(201,162,75,0.85);">Main Gate Master QR • Demo Scan</span>
+                  <h2 class="font-display text-base sm:text-lg font-black" style="color: #F3EDDA;">Courier Express Drop-Off</h2>
+                </div>
+              </div>
+              <div class="flex gap-2">
+                <button type="button" id="master-qr-button" onclick="simulateMasterQrScan()" class="btn btn-gold px-3 py-1.5 text-xs">Scan Master QR</button>
+
+                <button type="button" onclick="resetCourierSession()" class="btn btn-dark-key px-3 py-1.5 text-xs">Clear</button>
+              </div>
+            </div>
+
+            <div class="p-5 space-y-5">
+              <!-- STEP 1: Validate Student Phone Number -->
+              <div>
+                <div class="flex items-center justify-between mb-1.5">
+                  <label for="courier-phone-input" class="step-label">
+                    Step 1 · Validate Student Phone
+                  </label>
+                  <span class="text-[11px] font-medium" style="color: var(--muted);">From Shipping Label</span>
+                </div>
+
+                <div class="mb-2.5">
+                  <label for="courier-provider-select" class="block text-[11px] font-bold mb-1" style="color: var(--muted);">Delivery Provider</label>
+                  <select id="courier-provider-select" class="hb-input cursor-pointer">
+                    <option value="Amazon">Amazon</option><option value="Flipkart">Flipkart</option><option value="Delhivery">Delhivery</option><option value="Blue Dart">Blue Dart</option><option value="Ekart">Ekart</option><option value="Xpressbees">Xpressbees</option><option value="Myntra">Myntra</option><option value="Other">Other</option>
+                  </select>
+                </div>
+                <div class="flex gap-2">
+                  <input type="tel" id="courier-phone-input" maxlength="10" placeholder="10-digit mobile number"
+                    onkeydown="if(event.key==='Enter'){event.preventDefault();validateCourierPhoneNumber();}"
+                    class="hb-input flex-1 !font-mono !text-base !font-bold tracking-wider" />
+                  <button type="button" onclick="validateCourierPhoneNumber()"
+                    class="btn btn-green px-5 py-3 text-sm shrink-0">
+                    Verify
+                  </button>
+                </div>
+
+                <!-- Quick-Fill Demo Testing Pills -->
+                <div class="mt-3">
+                  <span class="block text-[11px] font-semibold mb-1.5" style="color: var(--muted);">Demo Quick-Fill Numbers:</span>
+                  <div class="flex flex-wrap gap-1.5">
+                    <button type="button" onclick="quickFillPhone('9123456780')"
+                      class="px-3 py-1.5 rounded-lg text-xs font-mono font-bold btn-ghost transition">
+                      9123456780
+                    </button>
+                    <button type="button" onclick="quickFillPhone('9988776655')"
+                      class="px-3 py-1.5 rounded-lg text-xs font-mono font-bold btn-ghost transition">
+                      9988776655
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Validation Rejection Banner -->
+              <div id="courier-reject-banner" class="hidden rounded-2xl p-4" style="background: #FDECEF; border: 1px solid #F3C2CC; color: #7A1B2C;">
+                <div class="flex items-start gap-3">
+                  <span class="text-lg">⛔</span>
+                  <div>
+                    <h3 class="text-xs sm:text-sm font-extrabold">Validation Rejected — Unknown Number</h3>
+                    <p id="courier-reject-text" class="text-xs mt-1 leading-relaxed" style="color: #9B2C3F;"></p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- STEP 2: Dynamic Compartment Allocation -->
+              <div id="courier-allocation-section" class="hidden space-y-4 pt-4" style="border-top: 1px solid var(--line);">
+                <div class="flex items-center justify-between">
+                  <span class="step-label">
+                    Step 2 · Compartment Allocation
+                  </span>
+                  <span id="courier-match-badge" class="chip"></span>
+                </div>
+
+                <!-- Verified Resident Details + Size Confirmation -->
+                <div class="p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3" style="background: rgba(21,96,69,0.07); border: 1px solid rgba(21,96,69,0.25);">
+                  <div>
+                    <span class="chip chip-green">✓ Verified Hostel Resident</span>
+                    <h3 id="courier-resident-info" class="text-sm sm:text-base font-extrabold mt-1" style="color: var(--ink);">
+                      Ananya Verma — Room A-212
+                    </h3>
+                    <p id="courier-resident-note" class="text-xs mt-0.5" style="color: var(--muted);"></p>
+                  </div>
+
+                  <div class="sm:text-right shrink-0">
+                    <label for="courier-size-select" class="block text-[11px] font-bold mb-1" style="color: var(--muted);">Confirm Size</label>
+                    <select id="courier-size-select" onchange="handleCourierSizeChange(this.value)"
+                      class="hb-input !py-1.5 !px-3 !text-xs !font-extrabold cursor-pointer">
+                      <option value="Small">Small</option>
+                      <option value="Medium" selected>Medium</option>
+                      <option value="Large">Large</option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- Assigned Compartment & 30-Minute Drop PIN Card -->
+                <div id="courier-assigned-card" class="hb-dark text-white p-5 flex items-center justify-between gap-4">
+                  <div>
+                    <span class="text-[10px] font-bold uppercase tracking-wider" style="color: var(--gold);">Assigned Compartment</span>
+                    <div id="courier-locker-title" class="font-display text-2xl sm:text-3xl font-black tracking-tight mt-0.5" style="color: #F3EDDA;">
+                      Locker #04
+                    </div>
+                    <p id="courier-locker-sub" class="text-xs mt-1" style="color: rgba(237,231,212,0.6);">
+                      Medium Compartment • Available Now
+                    </p>
+                  </div>
+
+                  <div class="rounded-2xl px-4 py-3 text-right shrink-0" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(201,162,75,0.3);">
+                    <span class="block text-[10px] font-bold uppercase tracking-wider" style="color: rgba(237,231,212,0.6);">30-Min Drop PIN</span>
+                    <span id="courier-drop-pin-display" class="pin-digits text-2xl sm:text-3xl font-extrabold">
+                      4821
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Drop-Off Confirmation Banner (Appears once Close & Lock Door is completed) -->
+                <div id="courier-drop-success-banner" class="hidden rounded-2xl p-4 space-y-2" style="background: rgba(21,96,69,0.08); border: 2px solid var(--green-600); color: var(--green-900);">
+                  <div class="flex items-start gap-3">
+                    <span class="text-xl">✅</span>
+                    <div class="flex-1">
+                      <h4 class="text-sm font-extrabold" style="color: var(--green-800);">Parcel Secured & Student Notified!</h4>
+                      <p id="courier-drop-success-text" class="text-xs mt-1 leading-relaxed" style="color: var(--green-700);"></p>
+                    </div>
+                  </div>
+                  <div class="pt-1 flex justify-end">
+                    <button type="button" onclick="switchRoleTab('student')"
+                      class="btn btn-green px-3.5 py-1.5 text-xs">
+                      View in Student Interface →
+                    </button>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Right Column (6 cols): Step 3 — Offline Keypad Drop-Off Simulator -->
+        <div class="lg:col-span-6">
+          <div class="hb-card p-5 sm:p-6">
+            <div class="flex items-center justify-between mb-2">
+              <div>
+                <span class="step-label">Step 3 · Compartment Keypad</span>
+                <h2 class="font-display text-base sm:text-lg font-black" style="color: var(--ink);">Offline Drop-Off Keypad</h2>
+              </div>
+              <span id="courier-keypad-badge" class="chip" style="background: rgba(104,121,110,0.1); color: var(--muted); border: 1px solid var(--line);">
+                Standby
+              </span>
+            </div>
+
+            <p class="text-xs leading-relaxed mb-5" style="color: var(--muted);">
+              Enter the 4-digit <strong style="color: var(--ink);">30-Min Drop PIN</strong>, place the parcel inside, and tap <strong style="color: var(--ink);">Close &amp; Lock Door</strong>. Wrong PINs trigger a 3-strike red LED lockout.
+            </p>
+
+            <!-- Physical Keypad Hardware Frame -->
+            <div class="max-w-xs mx-auto hb-dark text-white p-6" style="border: 3px solid rgba(201,162,75,0.4); border-radius: 1.6rem;">
+              <!-- LED Indicator Strip -->
+              <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-2">
+                  <span id="ck-led" class="w-3.5 h-3.5 rounded-full bg-slate-600 transition-colors"></span>
+                  <span id="ck-status-label" class="font-mono text-[11px] uppercase tracking-wider" style="color: rgba(237,231,212,0.55);">STANDBY</span>
+                </div>
+                <span class="font-mono text-[10px]" style="color: rgba(201,162,75,0.7);">OFFLINE OTP</span>
+              </div>
+
+              <!-- 4-Digit Screen -->
+              <div id="ck-screen-box" class="rounded-2xl py-3.5 px-4 mb-4 text-center" style="background: rgba(0,0,0,0.4); border: 1px solid rgba(201,162,75,0.25);">
+                <span id="ck-screen" class="pin-digits text-2xl font-extrabold">----</span>
+              </div>
+
+              <!-- Keypad Buttons -->
+              <div class="grid grid-cols-3 gap-2.5">
+                <button type="button" onclick="pressCourierDigit('1')" class="key">1</button>
+                <button type="button" onclick="pressCourierDigit('2')" class="key">2</button>
+                <button type="button" onclick="pressCourierDigit('3')" class="key">3</button>
+                <button type="button" onclick="pressCourierDigit('4')" class="key">4</button>
+                <button type="button" onclick="pressCourierDigit('5')" class="key">5</button>
+                <button type="button" onclick="pressCourierDigit('6')" class="key">6</button>
+                <button type="button" onclick="pressCourierDigit('7')" class="key">7</button>
+                <button type="button" onclick="pressCourierDigit('8')" class="key">8</button>
+                <button type="button" onclick="pressCourierDigit('9')" class="key">9</button>
+                <button type="button" onclick="clearCourierKeypad()" class="key key-clr">CLR</button>
+                <button type="button" onclick="pressCourierDigit('0')" class="key">0</button>
+                <button type="button" onclick="unlockCourierDoor()" class="key key-go">UNLOCK</button>
+              </div>
+
+              <!-- Door Unlocked Action: Place Parcel & Close Door -->
+              <div id="ck-door-open-panel" class="hidden mt-4 pt-4 space-y-2.5 text-center" style="border-top: 1px solid rgba(201,162,75,0.25);">
+                <p class="text-xs font-semibold" style="color: var(--gold-soft);">
+                  🔓 Door Open — Place parcel inside now.
+                </p>
+                <button type="button" onclick="completeCourierCloseAndLock()"
+                  class="btn btn-gold w-full py-3 px-4 text-xs font-extrabold">
+                  🔒 Close &amp; Lock Door
+                </button>
+              </div>
+
+              <p id="ck-helper-note" class="text-[11px] text-center mt-4" style="color: rgba(237,231,212,0.55);">
+                Verify a student's phone number on the left to assign a compartment.
+              </p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL A: REGISTER NEW RESIDENT (STUDENT TAB)                          -->
+  <!-- ===================================================================== -->
+  <div id="register-resident-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4" style="background: rgba(6,35,26,0.82);">
+    <div class="hb-card max-w-sm w-full p-5 fade-up">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="font-display text-lg font-black" style="color: var(--ink);">Register New Resident</h3>
+        <button type="button" onclick="toggleRegisterModal(false)" class="w-8 h-8 rounded-lg btn-ghost !p-0 text-sm font-bold">✕</button>
+      </div>
+      <p class="text-xs mb-4" style="color: var(--muted);">
+        Add a student to the verified directory so couriers can validate their number at the gate.
+      </p>
+      <form onsubmit="handleAddResident(event)" class="space-y-3">
+        <div>
+          <label class="block text-xs font-bold mb-1" style="color: var(--ink);">Full Name</label>
+          <input type="text" id="new-res-name" required placeholder="e.g., Meera Krishnan" class="hb-input" />
+        </div>
+        <div>
+          <label class="block text-xs font-bold mb-1" style="color: var(--ink);">Room Number</label>
+          <input type="text" id="new-res-room" required placeholder="e.g., Room D-105" class="hb-input" />
+        </div>
+        <div>
+          <label class="block text-xs font-bold mb-1" style="color: var(--ink);">10-Digit Mobile Number</label>
+          <input type="tel" id="new-res-phone" required pattern="[0-9]{10}" maxlength="10" placeholder="e.g., 9840123456" class="hb-input !font-mono" />
+        </div>
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="toggleRegisterModal(false)" class="btn btn-ghost px-3.5 py-2 text-xs">
+            Cancel
+          </button>
+          <button type="submit" class="btn btn-green px-4 py-2 text-xs">
+            Save &amp; Switch
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL B: STUDENT PICKUP KEYPAD SIMULATOR                              -->
+  <!-- ===================================================================== -->
+  <div id="student-pickup-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4" style="background: rgba(6,35,26,0.85);">
+    <div class="hb-dark text-white max-w-xs w-full p-5" style="border: 3px solid rgba(201,162,75,0.4); border-radius: 1.6rem;">
+      <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center gap-2">
+          <span id="sp-led" class="w-3 h-3 rounded-full bg-amber-400"></span>
+          <span id="sp-status" class="font-mono text-[11px] uppercase tracking-wider text-amber-300">LOCKER #02 LOCKED</span>
+        </div>
+        <button type="button" onclick="closeStudentPickupModal()" class="text-xs font-bold px-2 py-1 rounded-lg btn-dark-key">
+          ✕
+        </button>
+      </div>
+
+      <p class="text-xs mb-3" style="color: rgba(237,231,212,0.75);">
+        Enter your <strong style="color: var(--gold-soft);">24-Hour Pickup PIN</strong> (<span id="sp-hint-pin" class="font-mono font-bold" style="color: var(--gold);">9034</span>) to unlock and collect your parcel:
+      </p>
+
+      <div id="sp-screen-box" class="rounded-2xl py-3 px-4 mb-3.5 text-center" style="background: rgba(0,0,0,0.4); border: 1px solid rgba(201,162,75,0.25);">
+        <span id="sp-screen" class="pin-digits text-2xl font-extrabold">----</span>
+      </div>
+
+      <div class="grid grid-cols-3 gap-2">
+        <button type="button" onclick="pressStudentDigit('1')" class="key">1</button>
+        <button type="button" onclick="pressStudentDigit('2')" class="key">2</button>
+        <button type="button" onclick="pressStudentDigit('3')" class="key">3</button>
+        <button type="button" onclick="pressStudentDigit('4')" class="key">4</button>
+        <button type="button" onclick="pressStudentDigit('5')" class="key">5</button>
+        <button type="button" onclick="pressStudentDigit('6')" class="key">6</button>
+        <button type="button" onclick="pressStudentDigit('7')" class="key">7</button>
+        <button type="button" onclick="pressStudentDigit('8')" class="key">8</button>
+        <button type="button" onclick="pressStudentDigit('9')" class="key">9</button>
+        <button type="button" onclick="clearStudentKeypad()" class="key key-clr">CLR</button>
+        <button type="button" onclick="pressStudentDigit('0')" class="key">0</button>
+        <button type="button" onclick="verifyStudentPickupPin()" class="key key-go">OPEN</button>
+      </div>
+
+      <div id="sp-unlocked-panel" class="hidden mt-4 pt-3 text-center space-y-2.5" style="border-top: 1px solid rgba(201,162,75,0.25);">
+        <p class="text-xs font-semibold" style="color: var(--gold-soft);">
+          🔓 Compartment Unlocked! Collect your parcel and shut the door.
+        </p>
+        <button type="button" onclick="finalizeStudentPickup()"
+          class="btn btn-gold w-full py-2.5 px-4 text-xs font-extrabold">
+          Confirm Collected &amp; Free Locker
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- JAVASCRIPT APPLICATION LOGIC & SHARED LOCALSTORAGE STATE              -->
+  <!-- ===================================================================== -->
+  <script>
+    const STORAGE_KEY = 'hostelbox_integrated_v3';
+
+    function createInitialState() {
+      const now = Date.now();
+      return {
+        residents: [
+          { id: 'R1', name: 'Rohan Sharma', phone: '9876543210', room: 'Room B-304' },
+          { id: 'R2', name: 'Ananya Verma', phone: '9123456780', room: 'Room A-212' },
+          { id: 'R3', name: 'Karthik Nair', phone: '9988776655', room: 'Room C-108' }
+        ],
+        intents: [],
+        history: [],
+        lockers: [
+          { number: 1, size: 'Small', status: 'Available', studentPhone: null, studentName: null, room: null, pickupPin: null, dropTime: null, expiresAt: null, note: null },
+          { number: 2, size: 'Medium', status: 'Available', studentPhone: null, studentName: null, room: null, pickupPin: null, dropTime: null, expiresAt: null, pickupExpiresAt: null, provider: null, note: null },
+          { number: 3, size: 'Small', status: 'Available', studentPhone: null, studentName: null, room: null, pickupPin: null, dropTime: null, expiresAt: null, note: null },
+          { number: 4, size: 'Medium', status: 'Available', studentPhone: null, studentName: null, room: null, pickupPin: null, dropTime: null, expiresAt: null, note: null },
+          { number: 5, size: 'Large', status: 'Available', studentPhone: null, studentName: null, room: null, pickupPin: null, dropTime: null, expiresAt: null, pickupExpiresAt: null, provider: null, note: null },
+          { number: 6, size: 'Medium', status: 'Available', studentPhone: null, studentName: null, room: null, pickupPin: null, dropTime: null, expiresAt: null, note: null },
+          { number: 7, size: 'Small', status: 'Available', studentPhone: null, studentName: null, room: null, pickupPin: null, dropTime: null, expiresAt: null, note: null },
+          { number: 8, size: 'Large', status: 'Available', studentPhone: null, studentName: null, room: null, pickupPin: null, dropTime: null, expiresAt: null, note: null },
+          { number: 9, size: 'Medium', status: 'Available', studentPhone: null, studentName: null, room: null, pickupPin: null, dropTime: null, expiresAt: null, note: null },
+          { number: 10, size: 'Small', status: 'Available', studentPhone: null, studentName: null, room: null, pickupPin: null, dropTime: null, expiresAt: null, note: null },
+          { number: 11, size: 'Large', status: 'Available', studentPhone: null, studentName: null, room: null, pickupPin: null, dropTime: null, expiresAt: null, note: null },
+          { number: 12, size: 'Medium', status: 'Available', studentPhone: null, studentName: null, room: null, pickupPin: null, dropTime: null, expiresAt: null, note: null }
+        ]
+      };
+    }
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) {
+          const initial = createInitialState();
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(initial));
+          return initial;
+        }
+        const parsed = JSON.parse(raw);
+        if (!parsed.residents || !parsed.lockers) {
+          const fallback = createInitialState();
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(fallback));
+          return fallback;
+        }
+        parsed.intents = parsed.intents || [];
+        parsed.history = parsed.history || [];
+        parsed.intents.forEach(i => { if (!i.provider) { const m=(i.note||'').match(/Amazon|Flipkart|Delhivery|Blue Dart|Ekart|Xpressbees|Myntra/i); i.provider=m ? (m[0].toLowerCase()==='blue dart'?'Blue Dart':m[0][0].toUpperCase()+m[0].slice(1).toLowerCase()) : 'Amazon'; } });
+        const extra = [
+          ['Medium',9],['Small',10],['Large',11],['Medium',12]
+        ];
+        extra.forEach(([size,number]) => { if (!parsed.lockers.some(l=>l.number===number)) parsed.lockers.push({number,size,status:'Available',studentPhone:null,studentName:null,room:null,pickupPin:null,dropTime:null,expiresAt:null,note:null}); });
+        parsed.lockers.forEach(l => { if (l.status==='Occupied' && !l.pickupExpiresAt) l.pickupExpiresAt=l.expiresAt; });
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
+        return parsed;
+      } catch (e) {
+        return createInitialState();
+      }
+    }
+
+    function saveState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+      } catch (e) {}
+    }
+
+    let appState = loadState();
+    let currentTab = 'student';
+    let selectedStudentId = 'R1';
+    let studentViewTab = 'intents';
+    let latestArrivalAlert = null;
+
+    // Courier tab session state
+    let courierSession = {
+      resident: null,
+      matchedIntent: null,
+      selectedSize: 'Medium',
+      assignedLockerNumber: null,
+      dropPin: null,
+      keypadInput: '',
+      wrongAttempts: 0,
+      lockedOut: false,
+      doorUnlocked: false,
+      dropCompleted: false
+    };
+
+    // Student pickup modal keypad state
+    let pickupSession = {
+      lockerNumber: null,
+      expectedPin: null,
+      input: '',
+      wrongAttempts: 0,
+      lockedOut: false,
+      unlocked: false
+    };
+
+    // Cross-tab browser storage sync
+    window.addEventListener('storage', (event) => {
+      if (event.key === STORAGE_KEY && event.newValue) {
+        try {
+          appState = JSON.parse(event.newValue);
+          renderAll();
+        } catch (e) {}
+      }
+    });
+
+    // -----------------------------------------------------------------------
+    // UTILITIES
+    // -----------------------------------------------------------------------
+    function showToast(title, message, variant = 'teal') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      const extra = variant === 'error' ? 'hb-toast-error' : variant === 'amber' ? 'hb-toast-amber' : '';
+      const icon = variant === 'error' ? '⚠️' : variant === 'amber' ? '📲' : '✅';
+
+      toast.className = `pointer-events-auto hb-toast ${extra} p-3.5 transition-all duration-300 translate-y-2 opacity-0`;
+      toast.innerHTML = `
+        <div class="flex items-start gap-2.5">
+          <span class="text-sm mt-0.5">${icon}</span>
+          <div class="flex-1 min-w-0">
+            <p class="text-xs font-bold">${title}</p>
+            <p class="text-[11px] mt-0.5 leading-relaxed" style="color: rgba(237,231,212,0.75);">${message}</p>
+          </div>
+        </div>
+      `;
+      container.appendChild(toast);
+      requestAnimationFrame(() => toast.classList.remove('translate-y-2', 'opacity-0'));
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-2');
+        setTimeout(() => toast.remove(), 300);
+      }, 3800);
+    }
+
+    function generateFourDigitPin(exclude = null) {
+      let pin;
+      do {
+        pin = Math.floor(1000 + Math.random() * 9000).toString();
+      } while (pin === exclude);
+      return pin;
+    }
+
+    function getCurrentTimeLabel() {
+      return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function formatRemainingTime(expiresAt) {
+      if (!expiresAt) return '23h 59m';
+      const diff = Math.max(0, expiresAt - Date.now());
+      const h = Math.floor(diff / 3600000);
+      const m = Math.floor((diff % 3600000) / 60000);
+      const s = Math.floor((diff % 60000) / 1000);
+      return `${String(h).padStart(2, '0')}h ${String(m).padStart(2, '0')}m ${String(s).padStart(2, '0')}s`;
+    }
+
+    function resetDemoState() {
+      appState = createInitialState();
+      selectedStudentId = 'R1';
+      studentViewTab = 'intents';
+      latestArrivalAlert = null;
+      saveState();
+      resetCourierSession();
+      renderAll();
+      showToast('Demo Reset', 'Restored initial residents and 12 empty compartments. No delivery intents are preloaded.');
+    }
+
+    // -----------------------------------------------------------------------
+    // TOP NAVIGATION TAB SWITCHING
+    // -----------------------------------------------------------------------
+    function switchRoleTab(tab) {
+      currentTab = tab;
+      document.getElementById('panel-student').classList.toggle('hidden', tab !== 'student');
+      document.getElementById('panel-courier').classList.toggle('hidden', tab !== 'courier');
+
+      const stuBtn = document.getElementById('tab-student-btn');
+      const couBtn = document.getElementById('tab-courier-btn');
+
+      if (tab === 'student') {
+        stuBtn.className = 'role-tab role-tab-active';
+        couBtn.className = 'role-tab role-tab-idle';
+      } else {
+        couBtn.className = 'role-tab role-tab-active';
+        stuBtn.className = 'role-tab role-tab-idle';
+      }
+
+      renderAll();
+    }
+
+    // -----------------------------------------------------------------------
+    // TAB 1: STUDENT INTERFACE LOGIC
+    // -----------------------------------------------------------------------
+    function switchStudentView(view) {
+      studentViewTab = view;
+      document.getElementById('student-intents-panel').classList.toggle('hidden', view !== 'intents');
+      document.getElementById('student-parcels-panel').classList.toggle('hidden', view !== 'parcels');
+      document.getElementById('student-history-panel').classList.toggle('hidden', view !== 'history');
+      ['intents','parcels','history'].forEach(v => {
+        const b = document.getElementById(`student-${v === 'intents' ? 'intent' : v === 'parcels' ? 'parcels' : 'history'}-tab-btn`);
+        const isActive = view === v;
+        b.classList.toggle('sub-tab-active', isActive);
+        b.classList.toggle('sub-tab-idle', !isActive);
+      });
+    }
+
+    function handleSelectStudent(id) {
+      selectedStudentId = id;
+      renderStudentTab();
+      updateTopBadges();
+    }
+
+    function toggleRegisterModal(show) {
+      document.getElementById('register-resident-modal').classList.toggle('hidden', !show);
+    }
+
+    function handleAddResident(e) {
+      e.preventDefault();
+      const name = document.getElementById('new-res-name').value.trim();
+      const room = document.getElementById('new-res-room').value.trim();
+      const phone = document.getElementById('new-res-phone').value.trim();
+
+      if (appState.residents.some(r => r.phone === phone)) {
+        showToast('Already Registered', 'This mobile number is already in the verified directory.', 'error');
+        return;
+      }
+
+      const newId = 'R' + (appState.residents.length + 1);
+      appState.residents.push({ id: newId, name, phone, room });
+      selectedStudentId = newId;
+      saveState();
+      e.target.reset();
+      toggleRegisterModal(false);
+      renderAll();
+      showToast('Resident Added', `${name} (${room}) registered and selected.`);
+    }
+
+    function handleSubmitIntent(e) {
+      e.preventDefault();
+      const student = appState.residents.find(r => r.id === selectedStudentId);
+      const size = document.querySelector('input[name="intent-size"]:checked').value;
+      const provider = document.getElementById('intent-provider-select').value;
+      const note = document.getElementById('intent-note-input').value.trim();
+
+      appState.intents.unshift({
+        id: 'INT-' + Math.floor(100 + Math.random() * 900),
+        studentPhone: student.phone,
+        provider,
+        size,
+        note: note || `${provider} • ${size} Parcel`,
+        createdAt: `Today, ${getCurrentTimeLabel()}`
+      });
+
+      saveState();
+      document.getElementById('intent-note-input').value = '';
+      document.getElementById('intent-provider-select').value = 'Amazon';
+      renderAll();
+      showToast('Delivery Intent Logged', `Phone ${student.phone} validated in gate queue for ${size} parcel.`);
+    }
+
+    function cancelStudentIntent(intentId) {
+      const intent = appState.intents.find(i => i.id === intentId);
+      if (intent) appState.history.unshift({ type:'Intent Cancelled', studentPhone:intent.studentPhone, provider:intent.provider, size:intent.size, note:intent.note, date:`Today, ${getCurrentTimeLabel()}` });
+      appState.intents = appState.intents.filter(i => i.id !== intentId);
+      saveState();
+      renderAll();
+      showToast('Intent Cancelled', 'Removed from active queue.');
+    }
+
+    function refreshStudentPickupPin(lockerNumber) {
+      const locker = appState.lockers.find(l => l.number === lockerNumber);
+      if (!locker) return;
+      locker.pickupPin = generateFourDigitPin(locker.pickupPin);
+      locker.pickupExpiresAt = Date.now() + 24 * 3600 * 1000;
+      locker.expiresAt = locker.pickupExpiresAt;
+      saveState();
+      renderAll();
+      showToast('Pickup PIN Refreshed', `New 24-hour PIN ${locker.pickupPin} generated for Locker #0${lockerNumber}.`);
+    }
+
+    function dismissArrivalBanner() {
+      latestArrivalAlert = null;
+      document.getElementById('student-arrival-banner').classList.add('hidden');
+    }
+
+    // Student Pickup Keypad Modal
+    function openStudentPickupModal(lockerNumber) {
+      const locker = appState.lockers.find(l => l.number === lockerNumber);
+      if (!locker) return;
+
+      pickupSession = {
+        lockerNumber: locker.number,
+        expectedPin: locker.pickupPin,
+        input: '',
+        wrongAttempts: 0,
+        lockedOut: false,
+        unlocked: false
+      };
+
+      document.getElementById('sp-led').className = 'w-3 h-3 rounded-full bg-amber-400';
+      document.getElementById('sp-status').textContent = `LOCKER #0${locker.number} LOCKED`;
+      document.getElementById('sp-status').className = 'font-mono text-[11px] uppercase tracking-wider text-amber-300';
+      document.getElementById('sp-hint-pin').textContent = locker.pickupPin;
+      document.getElementById('sp-screen').textContent = '----';
+      document.getElementById('sp-unlocked-panel').classList.add('hidden');
+      document.getElementById('student-pickup-modal').classList.remove('hidden');
+    }
+
+    function closeStudentPickupModal() {
+      document.getElementById('student-pickup-modal').classList.add('hidden');
+    }
+
+    function pressStudentDigit(d) {
+      if (pickupSession.lockedOut || pickupSession.unlocked) return;
+      if (pickupSession.input.length < 4) {
+        pickupSession.input += d;
+        document.getElementById('sp-screen').textContent = pickupSession.input.padEnd(4, '-');
+      }
+    }
+
+    function clearStudentKeypad() {
+      if (pickupSession.lockedOut || pickupSession.unlocked) return;
+      pickupSession.input = '';
+      document.getElementById('sp-screen').textContent = '----';
+    }
+
+    function verifyStudentPickupPin() {
+      if (pickupSession.lockedOut || pickupSession.unlocked) return;
+      if (pickupSession.input.length < 4) {
+        showToast('Incomplete PIN', 'Enter all 4 digits of your Pickup PIN.', 'amber');
+        return;
+      }
+
+      const box = document.getElementById('sp-screen-box');
+      const led = document.getElementById('sp-led');
+      const status = document.getElementById('sp-status');
+
+      const pickupLocker = appState.lockers.find(l => l.number === pickupSession.lockerNumber);
+      if (pickupLocker && pickupLocker.pickupExpiresAt && Date.now() > pickupLocker.pickupExpiresAt) {
+        pickupSession.input = '';
+        showToast('Pickup PIN Expired', 'The 24-hour pickup window has ended. Contact hostel administration.', 'error');
+        return;
+      }
+      if (pickupSession.input !== pickupSession.expectedPin) {
+        pickupSession.wrongAttempts += 1;
+        pickupSession.input = '';
+        document.getElementById('sp-screen').textContent = 'ERR!';
+        box.classList.add('animate-shake', 'border-rose-500');
+        led.className = 'w-3 h-3 rounded-full bg-rose-500';
+        status.textContent = `WRONG PIN (${pickupSession.wrongAttempts}/3)`;
+        status.className = 'font-mono text-[11px] uppercase tracking-wider text-rose-400';
+
+        setTimeout(() => {
+          box.classList.remove('animate-shake', 'border-rose-500');
+          if (!pickupSession.lockedOut) {
+            document.getElementById('sp-screen').textContent = '----';
+          }
+        }, 650);
+
+        if (pickupSession.wrongAttempts >= 3) {
+          pickupSession.lockedOut = true;
+          pickupSession.lockedOutUntil = Date.now() + 5 * 60 * 1000;
+          document.getElementById('sp-screen').textContent = 'LOCK';
+          status.textContent = '5-MIN LOCKOUT';
+          setTimeout(() => { if (pickupSession.lockedOutUntil && Date.now() >= pickupSession.lockedOutUntil) { pickupSession.lockedOut = false; pickupSession.wrongAttempts = 0; pickupSession.input = ''; document.getElementById('sp-screen').textContent = '----'; document.getElementById('sp-led').className = 'w-3 h-3 rounded-full bg-amber-400'; document.getElementById('sp-status').textContent = `LOCKER #0${pickupSession.lockerNumber} LOCKED`; } }, 5 * 60 * 1000);
+          showToast('Red LED Security Lockout', '3 wrong PIN attempts blocked unauthorized entry.', 'error');
+        } else {
+          showToast('Incorrect Pickup PIN', `Red LED warning (${pickupSession.wrongAttempts}/3).`, 'error');
+        }
+        return;
+      }
+
+      pickupSession.unlocked = true;
+      led.className = 'w-3 h-3 rounded-full bg-emerald-400';
+      status.textContent = `LOCKER #0${pickupSession.lockerNumber} UNLOCKED`;
+      status.className = 'font-mono text-[11px] uppercase tracking-wider text-emerald-400';
+      document.getElementById('sp-screen').textContent = 'OPEN';
+      document.getElementById('sp-unlocked-panel').classList.remove('hidden');
+    }
+
+    function finalizeStudentPickup() {
+      const locker = appState.lockers.find(l => l.number === pickupSession.lockerNumber);
+      if (!locker) return;
+
+      const num = locker.number;
+      appState.history = appState.history || [];
+      appState.history.unshift({ type:'Parcel Collected', studentPhone:locker.studentPhone, provider:locker.provider || 'Parcel', size:locker.size, note:locker.note || 'Parcel collected from locker', date:`Today, ${getCurrentTimeLabel()}`, lockerNumber:num });
+      locker.status = 'Available';
+      locker.studentPhone = null;
+      locker.studentName = null;
+      locker.room = null;
+      locker.pickupPin = null;
+      locker.dropTime = null;
+      locker.expiresAt = null;
+      locker.pickupExpiresAt = null;
+      locker.provider = null;
+      locker.note = null;
+
+      saveState();
+      closeStudentPickupModal();
+
+      // If Courier tab had an allocation screen open, refresh its available locker grid too
+      renderAll();
+      showToast(`Locker #0${num} Freed`, 'Parcel collected! Compartment is now Available in Courier Interface.');
+    }
+
+    function renderStudentTab() {
+      const activeStudent = appState.residents.find(r => r.id === selectedStudentId) || appState.residents[0];
+
+      // Populate selector
+      const sel = document.getElementById('student-selector');
+      sel.innerHTML = appState.residents.map(r => `
+        <option value="${r.id}" ${r.id === activeStudent.id ? 'selected' : ''}>
+          ${r.name} • ${r.room}
+        </option>
+      `).join('');
+      document.getElementById('student-phone-caption').textContent = activeStudent.phone;
+
+      // Arrival alert banner
+      const bannerEl = document.getElementById('student-arrival-banner');
+      if (latestArrivalAlert) {
+        bannerEl.classList.remove('hidden');
+        document.getElementById('student-arrival-banner-text').textContent = latestArrivalAlert;
+      } else {
+        bannerEl.classList.add('hidden');
+      }
+
+      // Queued Intents for active student
+      const myIntents = appState.intents.filter(i => i.studentPhone === activeStudent.phone);
+      document.getElementById('student-intent-count').textContent = `${myIntents.length} Queued`;
+
+      const intentsList = document.getElementById('student-intents-list');
+      if (myIntents.length === 0) {
+        intentsList.innerHTML = `<p class="text-xs italic" style="color: var(--muted);">No queued intents for ${activeStudent.name}.</p>`;
+      } else {
+        intentsList.innerHTML = myIntents.map(intent => `
+          <div class="hb-row p-3 flex items-center justify-between gap-2" style="background: #FFFBEC; border-color: #EBD9A8;">
+            <div class="min-w-0">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="text-xs font-extrabold" style="color: var(--ink);">${intent.provider || 'Amazon'} • ${intent.size} Parcel</span>
+                <span class="chip chip-amber">Awaiting Courier</span>
+              </div>
+              <p class="text-[11px] mt-0.5 truncate" style="color: var(--muted);">${intent.note} • ${intent.createdAt}</p>
+            </div>
+            <button type="button" onclick="cancelStudentIntent('${intent.id}')" class="text-[11px] font-bold shrink-0 px-1 hover:underline" style="color: #B4233C;">
+              Cancel
+            </button>
+          </div>
+        `).join('');
+      }
+
+      // Active Parcels Ready for Pickup for active student
+      const myParcels = appState.lockers.filter(l => l.status === 'Occupied' && l.studentPhone === activeStudent.phone);
+      const activeCount = myParcels.length + myIntents.length;
+      document.getElementById('student-ready-badge').textContent = `${activeCount} Active`;
+      document.getElementById('student-subtab-parcel-count').textContent = activeCount;
+      switchStudentView(studentViewTab);
+
+      const parcelsList = document.getElementById('student-parcels-list');
+      const queuedCards = myIntents.map(intent => `
+        <div class="hb-row p-4 space-y-2" style="background: #FFFBEC; border-color: #EBD9A8;">
+          <div class="flex items-center justify-between gap-2"><strong class="text-sm" style="color: var(--ink);">${intent.provider} • ${intent.size} Parcel</strong><span class="chip chip-amber">Intent Logged</span></div>
+          <p class="text-xs" style="color: var(--muted);">${intent.note} • ${intent.createdAt}</p>
+          <button type="button" onclick="cancelStudentIntent('${intent.id}')" class="text-xs font-bold hover:underline" style="color: #B4233C;">Delete Intent</button>
+        </div>`).join('');
+      const deliveredCards = myParcels.map(l => `
+        <div class="hb-card p-4 sm:p-5 space-y-3.5" style="border: 1.5px solid rgba(21,96,69,0.35);">
+          <div class="flex flex-wrap items-center justify-between gap-2"><div class="flex items-center gap-2"><span class="px-3 py-1 rounded-xl font-mono text-xs font-extrabold" style="background: linear-gradient(160deg, var(--green-900), var(--green-950)); color: var(--gold); border: 1px solid rgba(201,162,75,0.35);">Locker #0${l.number}</span><span class="text-xs font-bold" style="color: var(--muted);">${l.size} Compartment</span></div><span class="chip chip-green">Delivered • ${l.dropTime}</span></div>
+          <p class="text-xs hb-row px-3 py-2" style="color: var(--muted);">Parcel Details: <strong style="color: var(--ink);">${l.provider ? l.provider + ' • ' : ''}${l.note || 'Prepaid Parcel'}</strong></p>
+          <div class="pin-panel p-4 flex items-center justify-between gap-3"><div><div class="flex items-center gap-2 flex-wrap"><span class="text-[10px] font-bold uppercase tracking-wider" style="color: var(--gold);">24-Hr Pickup PIN</span><span data-parcel-timer="${l.number}" class="text-[10px] font-mono" style="color: rgba(237,231,212,0.55);">(${formatRemainingTime(l.expiresAt)} left)</span></div><span class="block pin-digits text-2xl sm:text-3xl font-extrabold mt-1">${l.pickupPin}</span></div><button type="button" onclick="refreshStudentPickupPin(${l.number})" class="btn btn-dark-key px-3 py-2 text-xs shrink-0" style="color: var(--gold-soft);">↻ Refresh PIN</button></div>
+          <button type="button" onclick="openStudentPickupModal(${l.number})" class="btn btn-green w-full py-3 px-4 text-xs sm:text-sm font-extrabold">🔓 Unlock &amp; Collect Parcel</button>
+        </div>`).join('');
+      parcelsList.innerHTML = (queuedCards + deliveredCards) || `<div class="rounded-2xl p-6 text-center" style="border: 1.5px dashed var(--line); background: rgba(255,253,246,0.6);"><p class="text-sm font-bold" style="color: var(--ink);">No active parcels or delivery intents</p><p class="text-xs mt-1" style="color: var(--muted);">Log an expected delivery under Delivery Intent.</p></div>`;
+
+      const myHistory = (appState.history || []).filter(h => h.studentPhone === activeStudent.phone);
+      const historyList = document.getElementById('student-history-list');
+      historyList.innerHTML = myHistory.length ? myHistory.map(h => `<div class="hb-row p-3 flex items-center justify-between gap-3"><div class="min-w-0"><div class="text-xs font-extrabold" style="color: var(--ink);">${h.provider || 'Parcel'} • ${h.size || ''}</div><p class="text-[11px] mt-0.5" style="color: var(--muted);">${h.note || ''} • ${h.date || ''}</p></div><span class="chip ${h.type === 'Intent Cancelled' ? 'chip-rose' : 'chip-green'} shrink-0">${h.type}</span></div>`).join('') : `<p class="text-xs italic" style="color: var(--muted);">No parcel history for ${activeStudent.name}.</p>`;
+    }
+
+    // -----------------------------------------------------------------------
+    // TAB 2: COURIER INTERFACE LOGIC
+    // -----------------------------------------------------------------------
+    const QR_BTN_IDLE = 'btn btn-gold px-3 py-1.5 text-xs';
+    const QR_BTN_DONE = 'btn px-3 py-1.5 text-xs text-white';
+    const QR_BTN_DONE_STYLE = 'background: rgba(21,96,69,0.85); border: 1px solid rgba(201,162,75,0.4); color: var(--gold-soft);';
+
+    function simulateMasterQrScan() {
+      courierSession.qrScanned = true;
+      const btn = document.getElementById('master-qr-button');
+      btn.textContent = '✓ QR Scanned';
+      btn.className = QR_BTN_DONE;
+      btn.style.cssText = QR_BTN_DONE_STYLE;
+      showToast('Master QR Scanned', 'Courier demo session started at the hostel gate.');
+    }
+
+    function quickFillPhone(phone) {
+      if (!courierSession.qrScanned) simulateMasterQrScan();
+      document.getElementById('courier-phone-input').value = phone;
+      validateCourierPhoneNumber();
+    }
+
+    function validateCourierPhoneNumber() {
+      if (!courierSession.qrScanned) { showToast('Scan Master QR First', 'Start the courier session by scanning the gate QR.', 'amber'); return; }
+      const phone = document.getElementById('courier-phone-input').value.trim();
+      const provider = document.getElementById('courier-provider-select').value;
+      const rejectBanner = document.getElementById('courier-reject-banner');
+      const allocSection = document.getElementById('courier-allocation-section');
+      const successBanner = document.getElementById('courier-drop-success-banner');
+
+      successBanner.classList.add('hidden');
+      courierSession.dropCompleted = false;
+      courierSession.doorUnlocked = false;
+      courierSession.wrongAttempts = 0;
+      courierSession.lockedOut = false;
+      courierSession.keypadInput = '';
+
+      if (!/^\d{10}$/.test(phone)) {
+        rejectBanner.classList.remove('hidden');
+        document.getElementById('courier-reject-text').textContent = 'Please enter a valid 10-digit student mobile number printed on the shipping label.';
+        allocSection.classList.add('hidden');
+        resetCourierKeypadVisuals();
+        return;
+      }
+
+      const resident = appState.residents.find(r => r.phone === phone);
+      if (!resident) {
+        rejectBanner.classList.remove('hidden');
+        document.getElementById('courier-reject-text').textContent =
+          `Mobile number ${phone} is NOT registered in the Hostel Residents Directory. Compartment assignment is blocked to prevent unauthorized or mistyped drops.`;
+        allocSection.classList.add('hidden');
+        courierSession.resident = null;
+        courierSession.assignedLockerNumber = null;
+        resetCourierKeypadVisuals();
+        showToast('Validation Rejected', 'Unregistered number blocked at gate.', 'error');
+        return;
+      }
+
+      // Valid resident! Check if they pre-logged Delivery Intent
+      rejectBanner.classList.add('hidden');
+      allocSection.classList.remove('hidden');
+
+      const matchedIntent = appState.intents.find(i => i.studentPhone === phone && (i.provider || 'Amazon') === provider) || null;
+      if (!matchedIntent) {
+        rejectBanner.classList.remove('hidden');
+        document.getElementById('courier-reject-text').textContent = `No active ${provider} delivery intent found for ${resident.name}. Ask the student to register the expected parcel before drop-off.`;
+        allocSection.classList.add('hidden');
+        courierSession.resident = null;
+        courierSession.matchedIntent = null;
+        courierSession.assignedLockerNumber = null;
+        resetCourierKeypadVisuals();
+        showToast('No Matching Delivery Intent', 'Drop-off blocked: phone number and provider must both match.', 'error');
+        return;
+      }
+      courierSession.resident = resident;
+      courierSession.matchedIntent = matchedIntent;
+      courierSession.provider = provider;
+
+      const sizeToUse = matchedIntent.size;
+      courierSession.selectedSize = sizeToUse;
+      document.getElementById('courier-size-select').value = sizeToUse;
+
+      document.getElementById('courier-resident-info').textContent = `${resident.name} — ${resident.room}`;
+      const matchBadge = document.getElementById('courier-match-badge');
+      if (matchedIntent) {
+        matchBadge.textContent = '✓ Pre-Logged Intent Matched';
+        matchBadge.className = 'chip chip-green';
+        document.getElementById('courier-resident-note').textContent = `${provider} • Student note: ${matchedIntent.note}`;
+      }
+
+      assignAvailableCompartment();
+    }
+
+    function handleCourierSizeChange(newSize) {
+      courierSession.selectedSize = newSize;
+      assignAvailableCompartment();
+    }
+
+    function assignAvailableCompartment() {
+      const desiredSize = courierSession.selectedSize;
+      const sizeRank = {Small:1, Medium:2, Large:3};
+      let locker = appState.lockers.find(l => l.status === 'Available' && l.size === desiredSize);
+      if (!locker) locker = appState.lockers.filter(l => l.status === 'Available' && sizeRank[l.size] > sizeRank[desiredSize]).sort((a,b)=>sizeRank[a.size]-sizeRank[b.size])[0];
+
+      if (!locker) {
+        showToast('All Compartments Occupied', 'No available lockers right now. Free a slot in Student Interface.', 'error');
+        return;
+      }
+
+      const dropPin = generateFourDigitPin();
+      courierSession.assignedLockerNumber = locker.number;
+      courierSession.dropPin = dropPin;
+      courierSession.keypadInput = '';
+      courierSession.wrongAttempts = 0;
+      courierSession.lockedOut = false;
+      courierSession.doorUnlocked = false;
+      courierSession.dropCompleted = false;
+      courierSession.dropPinExpiresAt = Date.now() + 30 * 60 * 1000;
+
+      document.getElementById('courier-locker-title').textContent = `Locker #0${locker.number}`;
+      document.getElementById('courier-locker-sub').textContent = `${locker.size} Compartment • Allocated • PIN valid 30 min`;
+      document.getElementById('courier-drop-pin-display').textContent = dropPin;
+
+      // Sync Step 3 Offline Keypad Simulator
+      const badge = document.getElementById('courier-keypad-badge');
+      badge.textContent = `Locker #0${locker.number} Ready`;
+      badge.className = 'chip chip-green';
+
+      document.getElementById('ck-led').className = 'w-3.5 h-3.5 rounded-full bg-amber-400';
+      document.getElementById('ck-status-label').textContent = `LOCKER #0${locker.number} LOCKED`;
+      document.getElementById('ck-status-label').className = 'font-mono text-[11px] uppercase tracking-wider text-amber-300';
+      document.getElementById('ck-screen').textContent = '----';
+      document.getElementById('ck-door-open-panel').classList.add('hidden');
+      document.getElementById('ck-helper-note').textContent = `Enter Drop PIN (${dropPin}) on Locker #0${locker.number} keypad to open the door.`;
+    }
+
+    function resetCourierSession() {
+      document.getElementById('courier-phone-input').value = '';
+      courierSession.qrScanned = false;
+      const qrButton = document.getElementById('master-qr-button');
+      if (qrButton) { qrButton.textContent = 'Scan Master QR'; qrButton.className = QR_BTN_IDLE; qrButton.style.cssText = ''; }
+      document.getElementById('courier-reject-banner').classList.add('hidden');
+      document.getElementById('courier-allocation-section').classList.add('hidden');
+      document.getElementById('courier-drop-success-banner').classList.add('hidden');
+
+      courierSession = {
+        resident: null,
+        matchedIntent: null,
+        selectedSize: 'Medium',
+        assignedLockerNumber: null,
+        dropPin: null,
+        keypadInput: '',
+        wrongAttempts: 0,
+        lockedOut: false,
+        doorUnlocked: false,
+        dropCompleted: false
+      };
+      resetCourierKeypadVisuals();
+    }
+
+    function resetCourierKeypadVisuals() {
+      const badge = document.getElementById('courier-keypad-badge');
+      badge.textContent = 'Standby';
+      badge.className = 'chip';
+      badge.style.cssText = 'background: rgba(104,121,110,0.1); color: var(--muted); border: 1px solid var(--line);';
+
+      document.getElementById('ck-led').className = 'w-3.5 h-3.5 rounded-full bg-slate-600';
+      document.getElementById('ck-status-label').textContent = 'STANDBY';
+      document.getElementById('ck-status-label').className = 'font-mono text-[11px] uppercase tracking-wider';
+      document.getElementById('ck-status-label').style.color = 'rgba(237,231,212,0.55)';
+      document.getElementById('ck-screen').textContent = '----';
+      document.getElementById('ck-door-open-panel').classList.add('hidden');
+      document.getElementById('ck-helper-note').textContent = "Verify a student's phone number on the left to assign a compartment.";
+    }
+
+    function pressCourierDigit(d) {
+      if (!courierSession.assignedLockerNumber) {
+        showToast('No Compartment Assigned', 'Validate a student phone number first.', 'amber');
+        return;
+      }
+      if (courierSession.lockedOut) {
+        showToast('Red LED Lockout Active', '3 wrong PIN attempts detected. Click Clear to reset.', 'error');
+        return;
+      }
+      if (courierSession.doorUnlocked || courierSession.dropCompleted) {
+        return;
+      }
+      if (courierSession.keypadInput.length < 4) {
+        courierSession.keypadInput += d;
+        document.getElementById('ck-screen').textContent = courierSession.keypadInput.padEnd(4, '-');
+      }
+    }
+
+    function clearCourierKeypad() {
+      if (courierSession.lockedOut || courierSession.doorUnlocked || courierSession.dropCompleted) return;
+      courierSession.keypadInput = '';
+      document.getElementById('ck-screen').textContent = '----';
+    }
+
+    function unlockCourierDoor() {
+      if (!courierSession.assignedLockerNumber || courierSession.lockedOut || courierSession.doorUnlocked || courierSession.dropCompleted) {
+        return;
+      }
+      if (courierSession.dropPinExpiresAt && Date.now() > courierSession.dropPinExpiresAt) {
+        showToast('Drop PIN Expired', 'Re-verify the delivery intent to generate a fresh 30-minute Drop PIN.', 'error');
+        resetCourierSession();
+        return;
+      }
+      if (courierSession.keypadInput.length < 4) {
+        showToast('Enter 4-Digit Drop PIN', 'Type the 4-digit Drop PIN shown in Step 2.', 'amber');
+        return;
+      }
+
+      const box = document.getElementById('ck-screen-box');
+      const led = document.getElementById('ck-led');
+      const label = document.getElementById('ck-status-label');
+
+      // Wrong Drop PIN -> 3-strike red LED lockout
+      if (courierSession.keypadInput !== courierSession.dropPin) {
+        courierSession.wrongAttempts += 1;
+        courierSession.keypadInput = '';
+        document.getElementById('ck-screen').textContent = 'ERR!';
+        box.classList.add('animate-shake', 'border-rose-500');
+        led.className = 'w-3.5 h-3.5 rounded-full bg-rose-500';
+        label.textContent = `WRONG PIN (${courierSession.wrongAttempts}/3)`;
+        label.className = 'font-mono text-[11px] uppercase tracking-wider text-rose-400';
+        label.style.color = '';
+
+        setTimeout(() => {
+          box.classList.remove('animate-shake', 'border-rose-500');
+          if (!courierSession.lockedOut) {
+            document.getElementById('ck-screen').textContent = '----';
+          }
+        }, 650);
+
+        if (courierSession.wrongAttempts >= 3) {
+          courierSession.lockedOut = true;
+          courierSession.lockedOutUntil = Date.now() + 5 * 60 * 1000;
+          document.getElementById('ck-screen').textContent = 'LOCK';
+          label.textContent = 'RED LED LOCKOUT';
+          document.getElementById('ck-helper-note').textContent = 'Keypad locked for 5 minutes after 3 invalid PIN entries.';
+          setTimeout(() => { if (courierSession.lockedOutUntil && Date.now() >= courierSession.lockedOutUntil) { courierSession.lockedOut = false; courierSession.wrongAttempts = 0; courierSession.keypadInput = ''; document.getElementById('ck-screen').textContent = '----'; document.getElementById('ck-led').className = 'w-3.5 h-3.5 rounded-full bg-amber-400'; document.getElementById('ck-status-label').textContent = 'LOCKOUT CLEARED'; document.getElementById('ck-helper-note').textContent = 'You may retry the Drop PIN.'; } }, 5 * 60 * 1000);
+          showToast('3-Strike Red LED Lockout', 'Keypad locked due to 3 invalid PIN entries.', 'error');
+        } else {
+          showToast('Invalid Drop PIN', `Red LED warning (${courierSession.wrongAttempts}/3). Drop PIN is ${courierSession.dropPin}.`, 'error');
+        }
+        return;
+      }
+
+      // Valid Drop PIN -> Door Unlocked! Prompt Courier to Place Parcel & Close/Lock Door
+      courierSession.doorUnlocked = true;
+      led.className = 'w-3.5 h-3.5 rounded-full bg-emerald-400';
+      label.textContent = `LOCKER #0${courierSession.assignedLockerNumber} OPEN`;
+      label.className = 'font-mono text-[11px] uppercase tracking-wider text-emerald-400';
+      label.style.color = '';
+      document.getElementById('ck-screen').textContent = 'OPEN';
+      document.getElementById('ck-door-open-panel').classList.remove('hidden');
+      document.getElementById('ck-helper-note').textContent = 'Place parcel inside compartment and tap "Close & Lock Door".';
+    }
+
+    function completeCourierCloseAndLock() {
+      if (!courierSession.doorUnlocked || courierSession.dropCompleted) return;
+
+      const locker = appState.lockers.find(l => l.number === courierSession.assignedLockerNumber);
+      const resident = courierSession.resident;
+      if (!locker || !resident) return;
+
+      const pickupPin = generateFourDigitPin(courierSession.dropPin);
+      const timeNow = getCurrentTimeLabel();
+
+      locker.status = 'Occupied';
+      locker.studentPhone = resident.phone;
+      locker.studentName = resident.name;
+      locker.room = resident.room;
+      locker.pickupPin = pickupPin;
+      locker.dropTime = `Today, ${timeNow}`;
+      locker.expiresAt = Date.now() + 24 * 3600 * 1000;
+      locker.pickupExpiresAt = locker.expiresAt;
+      locker.provider = courierSession.provider;
+      locker.note = courierSession.matchedIntent ? courierSession.matchedIntent.note : `${locker.size} Prepaid Parcel`;
+
+      // Consume matched delivery intent if one existed
+      if (courierSession.matchedIntent) {
+        appState.intents = appState.intents.filter(i => i.id !== courierSession.matchedIntent.id);
+      }
+
+      // Auto-select this resident in Student Interface so switching tabs immediately shows their newly arrived parcel
+      selectedStudentId = resident.id;
+      latestArrivalAlert = `Parcel arrived for ${resident.name} (${resident.room}) in Locker #0${locker.number} at ${timeNow}. 24-Hr Pickup PIN: ${pickupPin}`;
+
+      saveState();
+
+      courierSession.dropCompleted = true;
+      document.getElementById('ck-door-open-panel').classList.add('hidden');
+      document.getElementById('ck-led').className = 'w-3.5 h-3.5 rounded-full bg-emerald-400';
+      document.getElementById('ck-status-label').textContent = 'LOCKED & SECURED';
+      document.getElementById('ck-status-label').className = 'font-mono text-[11px] uppercase tracking-wider text-emerald-400';
+      document.getElementById('ck-status-label').style.color = '';
+      document.getElementById('ck-screen').textContent = 'DONE';
+      document.getElementById('ck-helper-note').textContent = `Locker #0${locker.number} locked. Student notified with Pickup PIN.`;
+
+      const successBanner = document.getElementById('courier-drop-success-banner');
+      successBanner.classList.remove('hidden');
+      document.getElementById('courier-drop-success-text').innerHTML =
+        `<strong>${resident.name} (${resident.room})</strong> has been notified via SMS/WhatsApp: <strong>Locker #0${locker.number}</strong> • 24-Hour Pickup PIN: <span class="font-mono font-extrabold px-1.5 py-0.5 rounded" style="background: rgba(201,162,75,0.2); color: var(--green-900);">${pickupPin}</span>.`;
+
+      renderAll();
+      showToast('Drop-Off Complete!', `${resident.name} notified with Locker #0${locker.number} & Pickup PIN ${pickupPin}.`);
+    }
+
+    function renderCourierMiniGrid() {
+      const grid = document.getElementById('courier-mini-locker-grid');
+      if (!grid) return;
+      grid.innerHTML = appState.lockers.map(l => {
+        const isFree = l.status === 'Available';
+        return `
+          <div class="hb-row p-2 text-center" style="${isFree ? 'background: rgba(21,96,69,0.07); border-color: rgba(21,96,69,0.25);' : 'background: #FFFBEC; border-color: #EBD9A8;'}">
+            <span class="block font-mono text-xs font-extrabold" style="color: var(--ink);">#0${l.number}</span>
+            <span class="block text-[10px] font-semibold" style="color: ${isFree ? 'var(--green-700)' : '#92610F'};">${l.size[0]} • ${isFree ? 'Free' : 'Full'}</span>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // -----------------------------------------------------------------------
+    // MASTER SYNC RENDER
+    // -----------------------------------------------------------------------
+    function updateTopBadges() {
+      const freeCount = appState.lockers.filter(l => l.status === 'Available').length;
+      document.getElementById('header-status-line').textContent = 'Main Gate Smart Locker';
+
+      const activeStudent = appState.residents.find(r => r.id === selectedStudentId) || appState.residents[0];
+      const studentParcelCount = appState.lockers.filter(l => l.status === 'Occupied' && l.studentPhone === activeStudent.phone).length;
+      document.getElementById('nav-parcel-badge').textContent = studentParcelCount;
+    }
+
+    function renderAll() {
+      updateTopBadges();
+      renderStudentTab();
+      renderCourierMiniGrid();
+    }
+
+    // Live 1-second countdown ticker for 24-Hour Pickup PINs
+    setInterval(() => {
+      appState.lockers.forEach(l => {
+        if (l.status === 'Occupied' && l.expiresAt) {
+          const el = document.querySelector(`[data-parcel-timer="${l.number}"]`);
+          if (el) {
+            el.textContent = `(${formatRemainingTime(l.expiresAt)} left)`;
+          }
+        }
+      });
+    }, 1000);
+
+    window.onload = function () {
+      switchRoleTab('student');
+    };
+  </script>
+</body>
+</html>
